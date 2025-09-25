@@ -48,7 +48,7 @@ export default function LoginForm() {
 
     if (success) {
       toast.success(message as string)
-      router.push('/')
+      router.push('/gallery')
     } else {
       toast.error(message as string)
     }

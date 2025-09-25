@@ -2,6 +2,7 @@
 
 import { Button } from '@/components/ui/button'
 import { signOut } from '@/lib/auth-client'
+
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { toast } from 'sonner'
@@ -26,7 +27,7 @@ export const SignOutButton = () => {
           toast.success('You’ve logged out. See you soon!', {
             duration: 5000
           })
-          router.push('/auth/sign-in')
+          router.push('/auth')
         }
       }
     })
