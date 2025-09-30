@@ -44,7 +44,7 @@ function Header() {
           <nav className='ml-6 flex items-center gap-6'>
             {!isPending && user && isAdminUser ? null : (
               <Link
-                href='/gallery'
+                href='/site/gallery'
                 className='text-sm font-medium hover:text-teal-600'
               >
                 Gallery
@@ -81,6 +81,12 @@ function Header() {
                   href={'/admin/settings'}
                 >
                   Settings
+                </Link>
+                <Link
+                  className='text-sm font-medium hover:text-teal-600'
+                  href={'/admin/categories'}
+                >
+                  Categories
                 </Link>
               </>
             )}

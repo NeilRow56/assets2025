@@ -31,6 +31,8 @@ export const user = pgTable('user', {
   banExpires: timestamp('ban_expires')
 })
 
+export type User = typeof user.$inferSelect
+
 export const session = pgTable('session', {
   id: text('id').primaryKey(),
   expiresAt: timestamp('expires_at').notNull(),
@@ -81,13 +83,18 @@ export const verification = pgTable('verification', {
 
 // asset management tables
 
-export const category = pgTable('category', {
+export const categories = pgTable('categories', {
   id: serial('id').primaryKey(),
   name: text('name').notNull().unique(),
+  userId: text('user_id')
+    .notNull()
+    .references(() => user.id, { onDelete: 'restrict' }),
   createdAt: timestamp('created_at')
     .$defaultFn(() => new Date())
     .notNull()
 })
+
+export type Category = typeof categories.$inferSelect
 
 export const asset = pgTable('asset', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -99,7 +106,7 @@ export const asset = pgTable('asset', {
   userId: text('user_id')
     .notNull()
     .references(() => user.id, { onDelete: 'cascade' }),
-  categoryId: integer('category_id').references(() => category.id),
+  categoryId: integer('category_id').references(() => categories.id),
   createdAt: timestamp('created_at')
     .$defaultFn(() => new Date())
     .notNull(),
@@ -185,7 +192,7 @@ export const accountsRelations = relations(account, ({ one }) => ({
   })
 }))
 
-export const categoryRelations = relations(category, ({ many }) => ({
+export const categoryRelations = relations(categories, ({ many }) => ({
   assets: many(asset)
 }))
 
@@ -194,9 +201,9 @@ export const assetsRelations = relations(asset, ({ one, many }) => ({
     fields: [asset.userId],
     references: [user.id]
   }),
-  category: one(category, {
+  category: one(categories, {
     fields: [asset.categoryId],
-    references: [category.id]
+    references: [categories.id]
   }),
   purchases: many(purchase)
 }))
@@ -240,7 +247,7 @@ export const schema = {
   account,
   session,
   verification,
-  category,
+  categories,
   asset,
   payment,
   purchase,

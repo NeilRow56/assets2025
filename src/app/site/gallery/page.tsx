@@ -7,6 +7,6 @@ export default async function GalleryPage() {
   const session = await auth.api.getSession({
     headers: await headers()
   })
-  if (session && session.user.role === 'admin') redirect('/')
+  if (session && session.user.role === 'admin') redirect('/admin/settings')
   return <div></div>
 }

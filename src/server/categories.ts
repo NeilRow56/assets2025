@@ -1,64 +1,110 @@
-'use server'
 import { db } from '@/db'
-import { category } from '@/db/schema'
+import { categories } from '@/db/schema'
 import { auth } from '@/lib/auth'
-
-import { eq } from 'drizzle-orm'
-import { revalidatePath } from 'next/cache'
+import { actionClient } from '@/lib/safe-action'
+import {
+  insertCategorySchema,
+  insertCategorySchemaType
+} from '@/zod-schemas/categories'
+import { and, asc, eq } from 'drizzle-orm'
+import { flattenValidationErrors } from 'next-safe-action'
 import { headers } from 'next/headers'
-import { z } from 'zod'
+import { redirect } from 'next/navigation'
 
-const CategorySchema = z.object({
-  name: z
-    .string()
-    .min(2, 'Category name must be at least 2 characters')
-    .max(50, 'Category name must be max 50 characters')
-})
-
-export type CategoryFormValues = z.infer<typeof CategorySchema>
-
-export async function addNewCategoryAction(formData: FormData) {
-  const session = await auth.api.getSession({
-    headers: await headers()
-  })
-
-  if (!session?.user || session.user.role !== 'admin') {
-    throw new Error('You must be an admin to add categories')
-  }
-
-  try {
-    const name = formData.get('name') as string
-
-    const validateFields = CategorySchema.parse({ name })
-
-    const existingCategory = await db
-      .select()
-      .from(category)
-      .where(eq(category.name, validateFields.name))
-      .limit(1)
-
-    if (existingCategory.length > 0) {
-      return {
-        success: false,
-        message: 'category already exists! Please try with a different name'
-      }
-    }
-
-    await db.insert(category).values({
-      name: validateFields.name
+export async function getUserCategories(userId: string) {
+  const categoriesByUserId = await db
+    .select({
+      id: categories.id,
+      name: categories.name,
+      userId: categories.userId
     })
+    .from(categories)
+    .where(and(eq(categories.userId, userId)))
+    .orderBy(asc(categories.name))
 
-    revalidatePath('/admin/settings')
-    return {
-      success: true,
-      message: 'New category added'
-    }
-  } catch (e) {
-    console.log(e)
+  return categoriesByUserId
+}
 
-    return {
-      success: false,
-      message: 'Failed to add category'
-    }
+export const existingCategory = async (name: string, userId: string) => {
+  try {
+    return db
+      .select()
+      .from(categories)
+      .where(and(eq(categories.name, name), eq(categories.userId, userId)))
+  } catch {
+    return { success: false, message: 'Failed to create category' }
   }
 }
+
+//use-safe-actions
+
+export const saveCategoryAction = actionClient
+  .metadata({ actionName: 'saveCategoryAction' })
+  .inputSchema(insertCategorySchema, {
+    handleValidationErrorsShape: async ve =>
+      flattenValidationErrors(ve).fieldErrors
+  })
+  .action(
+    async ({
+      parsedInput: category
+    }: {
+      parsedInput: insertCategorySchemaType
+    }) => {
+      const session = await auth.api.getSession({
+        headers: await headers()
+      })
+
+      if (!session) redirect('/auth/sign-in')
+
+      // ERROR TESTS
+
+      // throw Error('test error client create action')
+
+      // New Category
+
+      // createdAt and updatedAt are set by the database
+      // Check if category already exists
+      const duplicatedCategory = await existingCategory(
+        category.name,
+        category.userId
+      )
+
+      // duplicatedCategory returns an array. If it is empty we want to convert the empty array to a string. We then make sure the array is zero so that the create function will work
+      const dupCat = duplicatedCategory.toString()
+
+      if (dupCat.length > 0) {
+        // next-safe-action lets you throw a typed error
+        throw new Error('Category already exists')
+      }
+
+      if (category.id === 0) {
+        const result = await db
+          .insert(categories)
+          .values({
+            name: category.name,
+            userId: category.userId
+          })
+          .returning({ insertedId: categories.id })
+
+        return {
+          message: `Category ID #${result[0].insertedId} created successfully`
+        }
+      }
+
+      // Existing category
+      // updatedAt is set by the database
+      const result = await db
+        .update(categories)
+        .set({
+          name: category.name,
+          userId: category.userId
+        })
+        // ! confirms category.id will always exist for the update function
+        .where(eq(categories.id, category.id!))
+        .returning({ updatedId: categories.id })
+
+      return {
+        message: `Category ID #${result[0].updatedId} updated successfully`
+      }
+    }
+  )

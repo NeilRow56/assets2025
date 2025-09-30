@@ -1,7 +1,15 @@
+import { Button } from '@/components/ui/button'
+import Link from 'next/link'
+
 export default function Home() {
   return (
     <div className='grid min-h-screen grid-rows-[20px_1fr_20px] items-center justify-items-center gap-16 p-8 pb-20 font-[family-name:var(--font-geist-sans)] sm:p-20'>
       Post list page/Homepage
+      <Link href='/auth'>
+        <Button className='bg-teal-500 text-white hover:bg-teal-600'>
+          Login
+        </Button>
+      </Link>
     </div>
   )
 }

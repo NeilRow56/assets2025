@@ -6,7 +6,6 @@ import { Toaster } from '@/components/ui/sonner'
 
 import { APP_DESCRIPTION, APP_NAME } from '@/lib/constants'
 import { ThemeProvider } from '@/components/theme-provider'
-import Header from '@/components/header'
 
 // import Header from '@/components/shared/header'
 
@@ -46,7 +45,6 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <Header />
           {children}
           <Toaster
             position='bottom-center'

@@ -1,4 +1,3 @@
-import CategoryManager from '@/components/admin/category-manager'
 import {
   Card,
   CardContent,
@@ -15,7 +14,7 @@ import {
 import { Users } from 'lucide-react'
 
 async function SettingsPage() {
-  const [category, userCount, assetsCount] = await Promise.all([
+  const [categories, userCount, assetsCount] = await Promise.all([
     getAllCategoriesAction(),
     getTotalUsersCountAction(),
     getTotalAssetsCountAction()
@@ -59,7 +58,8 @@ async function SettingsPage() {
           <CardTitle>Category Management</CardTitle>
         </CardHeader>
         <CardContent>
-          <CategoryManager categories={category} />
+          {/* <CategoryManager categories={category} /> */}
+          CATEGORY MANAGER COMPONENT
         </CardContent>
       </Card>
     </div>

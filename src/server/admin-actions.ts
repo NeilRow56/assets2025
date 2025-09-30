@@ -1,67 +1,67 @@
 'use server'
 import { db } from '@/db'
-import { asset, category, user } from '@/db/schema'
+import { asset, categories, user } from '@/db/schema'
 import { auth } from '@/lib/auth'
 
 import { eq, sql } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
 import { headers } from 'next/headers'
-import { z } from 'zod'
+// import { z } from 'zod'
 
-const CategorySchema = z.object({
-  name: z
-    .string()
-    .min(2, 'Category name must be at least 2 characters')
-    .max(50, 'Category name must be max 50 characters')
-})
+// const CategorySchema = z.object({
+//   name: z
+//     .string()
+//     .min(2, 'Category name must be at least 2 characters')
+//     .max(50, 'Category name must be max 50 characters')
+// })
 
-export type CategoryFormValues = z.infer<typeof CategorySchema>
+// export type CategoryFormValues = z.infer<typeof CategorySchema>
 
-export async function addNewCategoryAction(formData: FormData) {
-  const session = await auth.api.getSession({
-    headers: await headers()
-  })
+// export async function addNewCategoryAction(formData: FormData) {
+//   const session = await auth.api.getSession({
+//     headers: await headers()
+//   })
 
-  if (!session?.user || session.user.role !== 'admin') {
-    throw new Error('You must be an admin to add categories')
-  }
+//   if (!session?.user || session.user.role !== 'admin') {
+//     throw new Error('You must be an admin to add categories')
+//   }
 
-  try {
-    const name = formData.get('name') as string
+//   try {
+//     const name = formData.get('name') as string
 
-    const validateFields = CategorySchema.parse({ name })
+//     const validateFields = CategorySchema.parse({ name })
 
-    const existingCategory = await db
-      .select()
-      .from(category)
-      .where(eq(category.name, validateFields.name))
-      .limit(1)
+//     const existingCategory = await db
+//       .select()
+//       .from(categories)
+//       .where(eq(categories.name, validateFields.name))
+//       .limit(1)
 
-    if (existingCategory.length > 0) {
-      return {
-        success: false,
-        message: 'category already exists! Please try with a different name'
-      }
-    }
+//     if (existingCategory.length > 0) {
+//       return {
+//         success: false,
+//         message: 'category already exists! Please try with a different name'
+//       }
+//     }
 
-    await db.insert(category).values({
-      name: validateFields.name
-    })
+//     await db.insert(categories).values({
+//       name: validateFields.name
+//     })
 
-    revalidatePath('/admin/settings')
-    return {
-      success: true,
-      message: 'New category added'
-    }
-  } catch (e) {
-    console.log(e)
+//     revalidatePath('/admin/settings')
+//     return {
+//       success: true,
+//       message: 'New category added'
+//     }
+//   } catch (e) {
+//     console.log(e)
 
-    return {
-      success: false,
-      message: 'Failed to add category'
-    }
-  }
-}
+//     return {
+//       success: false,
+//       message: 'Failed to add category'
+//     }
+//   }
+// }
 
 export async function getAllCategoriesAction() {
   try {
@@ -73,7 +73,7 @@ export async function getAllCategoriesAction() {
       throw new Error('You must be an admin to access this data')
     }
 
-    return await db.select().from(category).orderBy(category.name)
+    return await db.select().from(categories).orderBy(categories.name)
   } catch (e) {
     console.log(e)
 
@@ -111,7 +111,7 @@ export async function deleteCategoryAction(categoryId: number) {
   }
 
   try {
-    await db.delete(category).where(eq(category.id, categoryId))
+    await db.delete(categories).where(eq(categories.id, categoryId))
 
     revalidatePath('/admin/settings')
     return {
