@@ -1,3 +1,5 @@
+'use server'
+
 import { db } from '@/db'
 import { categories } from '@/db/schema'
 import { auth } from '@/lib/auth'

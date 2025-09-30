@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -16,9 +16,13 @@ import {
   insertCategorySchema
 } from '@/zod-schemas/categories'
 import { Category, User } from '@/db/schema'
-
+import { useAction } from 'next-safe-action/hooks'
 import { InputWithLabel } from '@/components/form/input-with-label'
 import { Button } from '@/components/ui/button'
+import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
+import { saveCategoryAction } from '@/server/categories'
+import { LoaderCircle } from 'lucide-react'
 
 type Props = {
   open: boolean
@@ -28,11 +32,22 @@ type Props = {
 }
 
 function AddCategoryDialog({ setOpen, open, user, category }: Props) {
-  const defaultValues: insertCategorySchemaType = {
-    id: category?.id ?? 0,
-    name: category?.name ?? '',
-    userId: category?.userId ?? user.id
+  const router = useRouter()
+  const hasCategoryId = category?.id
+
+  const emptyValues: insertCategorySchemaType = {
+    id: 0,
+    name: '',
+    userId: user.id ?? ''
   }
+
+  const defaultValues: insertCategorySchemaType = hasCategoryId
+    ? {
+        id: category?.id ?? '',
+        name: category?.name ?? '',
+        userId: user.id ?? ''
+      }
+    : emptyValues
 
   const form = useForm<insertCategorySchemaType>({
     resolver: zodResolver(insertCategorySchema),
@@ -40,8 +55,41 @@ function AddCategoryDialog({ setOpen, open, user, category }: Props) {
     defaultValues
   })
 
+  useEffect(() => {
+    if (category) {
+      form.setValue('id', category.id)
+      form.setValue('name', category.name)
+    }
+  }, [category, form])
+
+  const {
+    execute: executeSave,
+    // result: saveResult,
+    isPending: isSaving,
+    reset: resetSaveAction
+  } = useAction(saveCategoryAction, {
+    onSuccess({ data }) {
+      if (data?.message) {
+        toast.success(
+          `Category ${category ? 'updated ' : 'added'} successfully`
+        )
+        router.refresh()
+        setOpen(false)
+        form.reset()
+      }
+    },
+
+    onError({ error }) {
+      console.log(error)
+
+      toast.error(
+        `Failed to ${category ? 'update' : 'add'} category. Category may alreay exist`
+      )
+    }
+  })
+
   async function submitForm(data: insertCategorySchemaType) {
-    console.log(data)
+    executeSave(data)
   }
 
   return (
@@ -77,8 +125,15 @@ function AddCategoryDialog({ setOpen, open, user, category }: Props) {
                     className='w-1/4'
                     variant='default'
                     title='Save'
+                    disabled={isSaving}
                   >
-                    Save
+                    {isSaving ? (
+                      <>
+                        <LoaderCircle className='animate-spin' /> Saving
+                      </>
+                    ) : (
+                      'Save'
+                    )}
                   </Button>
 
                   <Button
@@ -88,6 +143,7 @@ function AddCategoryDialog({ setOpen, open, user, category }: Props) {
                     title='Reset'
                     onClick={() => {
                       form.reset(defaultValues)
+                      resetSaveAction()
                     }}
                   >
                     Reset
