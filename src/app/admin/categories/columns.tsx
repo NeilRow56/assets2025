@@ -6,7 +6,7 @@ import DataTableColumnHeader from '@/components/table-components/data-table-colu
 import { ColumnDef } from '@tanstack/react-table'
 
 export type Category = {
-  id: string
+  id: number
   name: string
 }
 export const columns: ColumnDef<Category>[] = [

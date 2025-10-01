@@ -1,5 +1,13 @@
-import { relations, sql } from 'drizzle-orm'
-import { pgTable, text, timestamp, boolean, integer } from 'drizzle-orm/pg-core'
+import { relations } from 'drizzle-orm'
+import {
+  pgTable,
+  text,
+  timestamp,
+  boolean,
+  integer,
+  serial,
+  uuid
+} from 'drizzle-orm/pg-core'
 
 // user management tables
 
@@ -76,9 +84,7 @@ export const verification = pgTable('verification', {
 // asset management tables
 
 export const categories = pgTable('categories', {
-  id: text('id')
-    .primaryKey()
-    .default(sql`gen_random_uuid()`),
+  id: serial('id').primaryKey(),
   name: text('name').notNull(),
   userId: text('user_id')
     .notNull()
@@ -91,9 +97,7 @@ export const categories = pgTable('categories', {
 export type Category = typeof categories.$inferSelect
 
 export const assets = pgTable('assets', {
-  id: text('id')
-    .primaryKey()
-    .default(sql`gen_random_uuid()`),
+  id: uuid('id').defaultRandom().primaryKey(),
   title: text('title').notNull(),
   description: text('description'),
   fileUrl: text('file_url').notNull(),
@@ -102,7 +106,7 @@ export const assets = pgTable('assets', {
   userId: text('user_id')
     .notNull()
     .references(() => user.id, { onDelete: 'cascade' }),
-  categoryId: text('category_id').references(() => categories.id),
+  categoryId: integer('category_id').references(() => categories.id),
   createdAt: timestamp('created_at')
     .$defaultFn(() => new Date())
     .notNull(),
@@ -114,9 +118,7 @@ export const assets = pgTable('assets', {
 // asset management tables
 
 export const payments = pgTable('payments', {
-  id: text('id')
-    .primaryKey()
-    .default(sql`gen_random_uuid()`),
+  id: uuid('id').defaultRandom().primaryKey(),
   amount: integer('amount').notNull(),
   currency: text('currency').default('USD').notNull(),
   status: text('status').notNull(),
@@ -131,16 +133,14 @@ export const payments = pgTable('payments', {
 })
 
 export const purchases = pgTable('purchases', {
-  id: text('id')
-    .primaryKey()
-    .default(sql`gen_random_uuid()`),
-  assetId: text('asset_id')
+  id: uuid('id').defaultRandom().primaryKey(),
+  assetId: uuid('asset_id')
     .notNull()
     .references(() => assets.id, { onDelete: 'restrict' }),
   userId: text('user_id')
     .notNull()
     .references(() => user.id, { onDelete: 'cascade' }),
-  paymentId: text('payment_id')
+  paymentId: uuid('payment_id')
     .notNull()
     .references(() => payments.id),
   price: integer('price').notNull(),
@@ -150,11 +150,9 @@ export const purchases = pgTable('purchases', {
 })
 
 export const invoices = pgTable('invoices', {
-  id: text('id')
-    .primaryKey()
-    .default(sql`gen_random_uuid()`),
+  id: uuid('id').defaultRandom().primaryKey(),
   invoiceNumber: text('invoice_number').notNull().unique(),
-  purchaseId: text('purchase_id')
+  purchaseId: uuid('purchase_id')
     .notNull()
     .references(() => purchases.id, { onDelete: 'cascade' }),
   userId: text('user_id')

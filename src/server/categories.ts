@@ -43,7 +43,7 @@ export const existingCategory = async (name: string, userId: string) => {
   }
 }
 
-export const deleteCategory = async (id: string, path: string) => {
+export const deleteCategory = async (id: number, path: string) => {
   try {
     await db.delete(categories).where(eq(categories.id, id))
     revalidatePath(path)
@@ -94,7 +94,7 @@ export const saveCategoryAction = actionClient
         throw new Error('Category already exists')
       }
 
-      if (category.id === '') {
+      if (category.id === 0) {
         const result = await db
 
           .insert(categories)

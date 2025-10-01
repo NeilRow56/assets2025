@@ -39,14 +39,14 @@ function AddCategoryDialog({ setOpen, open, category, user }: Props) {
   const hasCategoryId = category?.id
 
   const emptyValues: insertCategorySchemaType = {
-    id: '',
+    id: 0,
     name: '',
     userId: user.id ?? ''
   }
 
   const defaultValues: insertCategorySchemaType = hasCategoryId
     ? {
-        id: category?.id ?? '',
+        id: category?.id ?? 0,
         name: category?.name ?? '',
         userId: user.id ?? ''
       }

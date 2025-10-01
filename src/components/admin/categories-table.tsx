@@ -19,7 +19,7 @@ import { Category, columns } from '@/app/admin/categories/columns'
 
 type Props = {
   data: {
-    id: string
+    id: number
     name: string
   }[]
   total: number
