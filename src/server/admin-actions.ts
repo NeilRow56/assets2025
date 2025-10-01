@@ -1,6 +1,6 @@
 'use server'
 import { db } from '@/db'
-import { assets, categories, user } from '@/db/schema'
+import { assets, user } from '@/db/schema'
 import { auth } from '@/lib/auth'
 
 import { eq, sql } from 'drizzle-orm'
@@ -63,24 +63,6 @@ import { headers } from 'next/headers'
 //   }
 // }
 
-export async function getAllCategoriesAction() {
-  try {
-    const session = await auth.api.getSession({
-      headers: await headers()
-    })
-
-    if (!session?.user || session.user.role !== 'admin') {
-      throw new Error('You must be an admin to access this data')
-    }
-
-    return await db.select().from(categories).orderBy(categories.name)
-  } catch (e) {
-    console.log(e)
-
-    return []
-  }
-}
-
 export async function getTotalUsersCountAction() {
   const session = await auth.api.getSession({
     headers: await headers()
@@ -101,31 +83,31 @@ export async function getTotalUsersCountAction() {
   }
 }
 
-export async function deleteCategoryAction(categoryId: number) {
-  const session = await auth.api.getSession({
-    headers: await headers()
-  })
+// export async function deleteCategoryAction(categoryId: number) {
+//   const session = await auth.api.getSession({
+//     headers: await headers()
+//   })
 
-  if (!session?.user || session.user.role !== 'admin') {
-    throw new Error('You must be an admin to delete category')
-  }
+//   if (!session?.user || session.user.role !== 'admin') {
+//     throw new Error('You must be an admin to delete category')
+//   }
 
-  try {
-    await db.delete(categories).where(eq(categories.id, categoryId))
+//   try {
+//     await db.delete(categories).where(eq(categories.id, categoryId))
 
-    revalidatePath('/admin/settings')
-    return {
-      success: true,
-      message: 'Category deleted successfully'
-    }
-  } catch (e) {
-    console.log(e)
-    return {
-      success: false,
-      message: 'Failed to delete category'
-    }
-  }
-}
+//     revalidatePath('/admin/settings')
+//     return {
+//       success: true,
+//       message: 'Category deleted successfully'
+//     }
+//   } catch (e) {
+//     console.log(e)
+//     return {
+//       success: false,
+//       message: 'Failed to delete category'
+//     }
+//   }
+// }
 
 export async function getTotalAssetsCountAction() {
   const session = await auth.api.getSession({

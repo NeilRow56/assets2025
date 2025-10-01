@@ -53,7 +53,7 @@ export default async function Categories() {
     if (data.length === 0) {
       return (
         <>
-          <div className='mx-auto flex max-w-6xl flex-col gap-2'>
+          <div className='mx-auto mt-24 flex max-w-6xl flex-col gap-2'>
             <EmptyState
               title='Categories'
               description='You have no categories yet. Click on the button below to create your first category'
