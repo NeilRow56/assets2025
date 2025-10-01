@@ -1,6 +1,7 @@
 'use server'
 
 import { db } from '@/db'
+
 import { categories } from '@/db/schema'
 import { auth } from '@/lib/auth'
 import { actionClient } from '@/lib/safe-action'
@@ -8,8 +9,12 @@ import {
   insertCategorySchema,
   insertCategorySchemaType
 } from '@/zod-schemas/categories'
+
 import { and, asc, eq } from 'drizzle-orm'
+
 import { flattenValidationErrors } from 'next-safe-action'
+import { revalidatePath } from 'next/cache'
+
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 
@@ -35,6 +40,16 @@ export const existingCategory = async (name: string, userId: string) => {
       .where(and(eq(categories.name, name), eq(categories.userId, userId)))
   } catch {
     return { success: false, message: 'Failed to create category' }
+  }
+}
+
+export const deleteCategory = async (id: string, path: string) => {
+  try {
+    await db.delete(categories).where(eq(categories.id, id))
+    revalidatePath(path)
+    return { success: true, message: 'Category deleted successfully' }
+  } catch {
+    return { success: false, message: 'Failed to delete category' }
   }
 }
 
@@ -79,8 +94,9 @@ export const saveCategoryAction = actionClient
         throw new Error('Category already exists')
       }
 
-      if (category.id === 0) {
+      if (category.id === '') {
         const result = await db
+
           .insert(categories)
           .values({
             name: category.name,
@@ -89,7 +105,7 @@ export const saveCategoryAction = actionClient
           .returning({ insertedId: categories.id })
 
         return {
-          message: `Category ID #${result[0].insertedId} created successfully`
+          message: `Client ID #${result[0].insertedId} created successfully`
         }
       }
 
@@ -106,7 +122,7 @@ export const saveCategoryAction = actionClient
         .returning({ updatedId: categories.id })
 
       return {
-        message: `Category ID #${result[0].updatedId} updated successfully`
+        message: `Client ID #${result[0].updatedId} updated successfully`
       }
     }
   )

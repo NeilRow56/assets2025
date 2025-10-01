@@ -30,7 +30,7 @@ function Header() {
 
   return (
     <header className='fixed top-0 right-0 left-0 z-50 border-b bg-white'>
-      <div className='container flex h-16 items-center justify-between px-4'>
+      <div className='container mx-auto flex h-16 items-center justify-between px-4'>
         <div className='flex items-center gap-4'>
           <Link href='/' className='flex items-center gap-2'>
             <div className='rounded-md bg-teal-500 p-2'>
@@ -93,7 +93,7 @@ function Header() {
           </nav>
         </div>
         <div className='flex items-center gap-6'>
-          {isPending ? null : user ? (
+          {user ? (
             <div className='flex items-center gap-3'>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

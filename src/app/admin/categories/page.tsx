@@ -1,12 +1,23 @@
-import { AddCategoryButton } from '@/components/admin/add-category-button'
-import { BackButton } from '@/components/back-button'
-import { EmptyState } from '@/components/emply-state'
-import { SkeletonArray } from '@/components/skeleton'
-import { SkeletonCustomerCard } from '@/components/skeleton-customer-card'
-import { getUserCategories } from '@/server/categories'
+import { Suspense } from 'react'
+
 import { getCurrentUserId, getUserDetails } from '@/server/users'
 import { redirect } from 'next/navigation'
-import { Suspense } from 'react'
+
+import { db } from '@/db'
+import { categories } from '@/db/schema'
+import { count } from 'drizzle-orm'
+
+import { SkeletonArray } from '@/components/skeleton'
+import { SkeletonCustomerCard } from '@/components/skeleton-customer-card'
+import { BackButton } from '@/components/back-button'
+import { EmptyState } from '@/components/empty-state'
+import { AddCategoryButton } from '@/components/admin/add-category-button'
+import CategoriesTable from '@/components/admin/categories-table'
+import { getUserCategories } from '@/server/categories'
+
+export const metadata = {
+  title: 'Client Search'
+}
 
 export default async function Categories() {
   const { userId } = await getCurrentUserId()
@@ -28,7 +39,16 @@ export default async function Categories() {
       )
     }
 
+    // const page = parseInt(params.page || '0') + 1
+    // const take = parseInt(params.limit || '10')
+
     const data = await getUserCategories(userId)
+    type Result = { count: number }
+    const dbCount = await db.select({ count: count() }).from(categories)
+
+    const arr: Result[] = dbCount
+
+    const total: number = arr.reduce((sum, result) => sum + result.count, 0)
 
     if (data.length === 0) {
       return (
@@ -41,12 +61,14 @@ export default async function Categories() {
           </div>
 
           <div className='- mt-12 flex w-full justify-center'>
+            {/* <Button asChild size='lg' className='i flex w-[200px]'>
+              <Link href='/admin/categories/form'>Create Category</Link>
+            </Button> */}
             <AddCategoryButton user={user} />
           </div>
         </>
       )
     }
-
     return (
       <>
         <div className='container mx-auto max-w-2xl py-10'>
@@ -57,7 +79,7 @@ export default async function Categories() {
               </SkeletonArray>
             }
           >
-            Category Table
+            <CategoriesTable data={data} total={total} user={user} />
           </Suspense>
         </div>
       </>

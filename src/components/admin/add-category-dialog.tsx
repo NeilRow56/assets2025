@@ -10,19 +10,21 @@ import { Form } from '@/components/ui/form'
 
 import { useForm } from 'react-hook-form'
 
+import { toast } from 'sonner'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
   insertCategorySchemaType,
   insertCategorySchema
 } from '@/zod-schemas/categories'
-import { Category, User } from '@/db/schema'
+import { User } from '@/db/schema'
+import { saveCategoryAction } from '@/server/categories'
 import { useAction } from 'next-safe-action/hooks'
+
 import { InputWithLabel } from '@/components/form/input-with-label'
 import { Button } from '@/components/ui/button'
-import { useRouter } from 'next/navigation'
-import { toast } from 'sonner'
-import { saveCategoryAction } from '@/server/categories'
 import { LoaderCircle } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Category } from '@/app/admin/categories/columns'
 
 type Props = {
   open: boolean
@@ -31,12 +33,13 @@ type Props = {
   category?: Category
 }
 
-function AddCategoryDialog({ setOpen, open, user, category }: Props) {
+function AddCategoryDialog({ setOpen, open, category, user }: Props) {
+  // const searchParams = useSearchParams()
   const router = useRouter()
   const hasCategoryId = category?.id
 
   const emptyValues: insertCategorySchemaType = {
-    id: 0,
+    id: '',
     name: '',
     userId: user.id ?? ''
   }

@@ -8,5 +8,5 @@ export default async function GalleryPage() {
     headers: await headers()
   })
   if (session && session.user.role === 'admin') redirect('/admin/settings')
-  return <div></div>
+  return <div>Gallery Page</div>
 }

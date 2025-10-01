@@ -1,6 +1,6 @@
 'use server'
 import { db } from '@/db'
-import { asset, categories, user } from '@/db/schema'
+import { assets, categories, user } from '@/db/schema'
 import { auth } from '@/lib/auth'
 
 import { eq, sql } from 'drizzle-orm'
@@ -137,7 +137,9 @@ export async function getTotalAssetsCountAction() {
   }
 
   try {
-    const result = await db.select({ count: sql<number>`count(*)` }).from(asset)
+    const result = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(assets)
 
     return result[0]?.count || 0
   } catch (e) {
@@ -158,9 +160,9 @@ export async function approveAssetAction(assetId: string) {
 
   try {
     await db
-      .update(asset)
+      .update(assets)
       .set({ isApproved: 'approved', updatedAt: new Date() })
-      .where(eq(asset.id, assetId))
+      .where(eq(assets.id, assetId))
     revalidatePath('/admin/asset-approval')
     return {
       success: true
@@ -184,9 +186,9 @@ export async function rejectAssetAction(assetId: string) {
 
   try {
     await db
-      .update(asset)
+      .update(assets)
       .set({ isApproved: 'rejected', updatedAt: new Date() })
-      .where(eq(asset.id, assetId))
+      .where(eq(assets.id, assetId))
     revalidatePath('/admin/asset-approval')
 
     return {
@@ -212,12 +214,12 @@ export async function getPendingAssetsAction() {
   try {
     const pendingAssets = await db
       .select({
-        asset: asset,
+        asset: assets,
         userName: user.name
       })
-      .from(asset)
-      .leftJoin(user, eq(asset.userId, user.id))
-      .where(eq(asset.isApproved, 'pending'))
+      .from(assets)
+      .leftJoin(user, eq(assets.userId, user.id))
+      .where(eq(assets.isApproved, 'pending'))
 
     return pendingAssets
   } catch (e) {

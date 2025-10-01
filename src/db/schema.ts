@@ -1,13 +1,5 @@
-import { relations } from 'drizzle-orm'
-import {
-  pgTable,
-  text,
-  timestamp,
-  boolean,
-  integer,
-  serial,
-  uuid
-} from 'drizzle-orm/pg-core'
+import { relations, sql } from 'drizzle-orm'
+import { pgTable, text, timestamp, boolean, integer } from 'drizzle-orm/pg-core'
 
 // user management tables
 
@@ -84,8 +76,10 @@ export const verification = pgTable('verification', {
 // asset management tables
 
 export const categories = pgTable('categories', {
-  id: serial('id').primaryKey(),
-  name: text('name').notNull().unique(),
+  id: text('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  name: text('name').notNull(),
   userId: text('user_id')
     .notNull()
     .references(() => user.id, { onDelete: 'restrict' }),
@@ -96,8 +90,10 @@ export const categories = pgTable('categories', {
 
 export type Category = typeof categories.$inferSelect
 
-export const asset = pgTable('asset', {
-  id: uuid('id').defaultRandom().primaryKey(),
+export const assets = pgTable('assets', {
+  id: text('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
   title: text('title').notNull(),
   description: text('description'),
   fileUrl: text('file_url').notNull(),
@@ -106,7 +102,7 @@ export const asset = pgTable('asset', {
   userId: text('user_id')
     .notNull()
     .references(() => user.id, { onDelete: 'cascade' }),
-  categoryId: integer('category_id').references(() => categories.id),
+  categoryId: text('category_id').references(() => categories.id),
   createdAt: timestamp('created_at')
     .$defaultFn(() => new Date())
     .notNull(),
@@ -117,8 +113,10 @@ export const asset = pgTable('asset', {
 
 // asset management tables
 
-export const payment = pgTable('payment', {
-  id: uuid('id').defaultRandom().primaryKey(),
+export const payments = pgTable('payments', {
+  id: text('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
   amount: integer('amount').notNull(),
   currency: text('currency').default('USD').notNull(),
   status: text('status').notNull(),
@@ -132,29 +130,33 @@ export const payment = pgTable('payment', {
     .notNull()
 })
 
-export const purchase = pgTable('purchase', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  assetId: uuid('asset_id')
+export const purchases = pgTable('purchases', {
+  id: text('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  assetId: text('asset_id')
     .notNull()
-    .references(() => asset.id, { onDelete: 'restrict' }),
+    .references(() => assets.id, { onDelete: 'restrict' }),
   userId: text('user_id')
     .notNull()
     .references(() => user.id, { onDelete: 'cascade' }),
-  paymentId: uuid('payment_id')
+  paymentId: text('payment_id')
     .notNull()
-    .references(() => payment.id),
+    .references(() => payments.id),
   price: integer('price').notNull(),
   createdAt: timestamp('created_at')
     .$defaultFn(() => new Date())
     .notNull()
 })
 
-export const invoice = pgTable('invoice', {
-  id: uuid('id').defaultRandom().primaryKey(),
+export const invoices = pgTable('invoices', {
+  id: text('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
   invoiceNumber: text('invoice_number').notNull().unique(),
-  purchaseId: uuid('purchase_id')
+  purchaseId: text('purchase_id')
     .notNull()
-    .references(() => purchase.id, { onDelete: 'cascade' }),
+    .references(() => purchases.id, { onDelete: 'cascade' }),
   userId: text('user_id')
     .notNull()
     .references(() => user.id, { onDelete: 'cascade' }),
@@ -173,9 +175,9 @@ export const invoice = pgTable('invoice', {
 export const usersRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),
-  assets: many(asset),
-  payments: many(payment),
-  purchases: many(purchase)
+  assets: many(assets),
+  payments: many(payments),
+  purchases: many(purchases)
 }))
 
 export const sessionsRelations = relations(session, ({ one }) => ({
@@ -193,51 +195,51 @@ export const accountsRelations = relations(account, ({ one }) => ({
 }))
 
 export const categoryRelations = relations(categories, ({ many }) => ({
-  assets: many(asset)
+  assets: many(assets)
 }))
 
-export const assetsRelations = relations(asset, ({ one, many }) => ({
+export const assetsRelations = relations(assets, ({ one, many }) => ({
   user: one(user, {
-    fields: [asset.userId],
+    fields: [assets.userId],
     references: [user.id]
   }),
   category: one(categories, {
-    fields: [asset.categoryId],
+    fields: [assets.categoryId],
     references: [categories.id]
   }),
-  purchases: many(purchase)
+  purchases: many(purchases)
 }))
 
-export const paymentRelations = relations(payment, ({ one, many }) => ({
+export const paymentRelations = relations(payments, ({ one, many }) => ({
   user: one(user, {
-    fields: [payment.userId],
+    fields: [payments.userId],
     references: [user.id]
   }),
-  purchases: many(purchase)
+  purchases: many(purchases)
 }))
 
-export const purchaseRelations = relations(purchase, ({ one }) => ({
-  asset: one(asset, {
-    fields: [purchase.assetId],
-    references: [asset.id]
+export const purchaseRelations = relations(purchases, ({ one }) => ({
+  asset: one(assets, {
+    fields: [purchases.assetId],
+    references: [assets.id]
   }),
   user: one(user, {
-    fields: [purchase.userId],
+    fields: [purchases.userId],
     references: [user.id]
   }),
-  payment: one(payment, {
-    fields: [purchase.paymentId],
-    references: [payment.id]
+  payment: one(payments, {
+    fields: [purchases.paymentId],
+    references: [payments.id]
   })
 }))
 
-export const invoiceRelations = relations(invoice, ({ one }) => ({
-  purchase: one(purchase, {
-    fields: [invoice.purchaseId],
-    references: [purchase.id]
+export const invoiceRelations = relations(invoices, ({ one }) => ({
+  purchase: one(purchases, {
+    fields: [invoices.purchaseId],
+    references: [purchases.id]
   }),
   user: one(user, {
-    fields: [invoice.userId],
+    fields: [invoices.userId],
     references: [user.id]
   })
 }))
@@ -248,10 +250,10 @@ export const schema = {
   session,
   verification,
   categories,
-  asset,
-  payment,
-  purchase,
-  invoice,
+  assets,
+  payments,
+  purchases,
+  invoices,
   usersRelations,
   accountsRelations,
   sessionsRelations,
